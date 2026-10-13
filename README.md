@@ -6,3 +6,4 @@ Clone the repo and run "pip install -r requirements.txt" to install packages
 Then to run use "python main.py"
 
 ## Issues
+Need a way to handle multiple cities with same name.
