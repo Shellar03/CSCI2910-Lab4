@@ -1,12 +1,14 @@
 import requests
 
-def get_city_coords(city):
-    #Find city latitude and longitude using Open-Meteo geocoding api.
+def get_locations(city):
+    # Finds 5 cities matching entered input and returns
+    # latitude and longitude of selected city
+    # using Open-Meteo geocoding api.
     url = "https://geocoding-api.open-meteo.com/v1/search"
 
     params = {
         "name": city,
-        "count": 1,
+        "count": 5,
         "language": "en",
         "format": "json"
     }
@@ -19,15 +21,18 @@ def get_city_coords(city):
     if not data.get("results"):
         return None
 
-    location = data["results"][0]
+    locations = []
 
-    return {
-        "name": location["name"],
-        "latitude": location["latitude"],
-        "longitude": location["longitude"],
-        "country": location.get("country", ""),
-        "region": location.get("admin1", "")
-    }
+    for result in data["results"]:
+        locations.append({
+            "name": result["name"],
+            "latitude": result["latitude"],
+            "longitude": result["longitude"],
+            "country": result.get("country", ""),
+            "region": result.get("admin1", "")
+        })
+
+    return locations
 
 def get_weather(latitude, longitude):
     #Retrieve current weather and a seven-day forecast.
@@ -72,11 +77,40 @@ def main():
         return
 
     try:
-        location = get_city_coords(city)
+        locations = get_locations(city)
 
-        if location is None:
+        if not locations:
             print("Location not found, try another city.")
             return
+
+        print("\nMatching locations:")
+
+        for i, location in enumerate(locations, start=1):
+            region = location["region"]
+            country = location["country"]
+
+            print(f"{i}. {location['name']}, "
+                  f"{region}, {country}")
+
+        
+        while True:
+            choice = input(
+                f"\nChoose a location (1-{len(locations)}): "
+            ).strip()
+
+            try:
+                choice = int(choice)
+            except ValueError:
+                print("Please enter a valid number.")
+                continue
+
+            if 1 <= choice <= len(locations):
+                break
+
+            print("Please enter a number from the list.")
+
+        # The selection loop ends here.
+        location = locations[choice - 1]
 
         print(f"\nWeather for {location['name']}, "
               f"{location['region']}, {location['country']}")
@@ -109,6 +143,7 @@ def main():
             print(f"  Low: {low} °F")
             print(f"  Precipitation: {rain} in")
             print(f"  Maximum wind: {wind} mph")
+
 
     except requests.RequestException as error:
         print(f"Could not retrieve location data: {error}")
